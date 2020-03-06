@@ -1,4 +1,6 @@
+import 'dart:convert' as convert;
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
 void main() => runApp(MyApp());
 
@@ -6,11 +8,11 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'All About Dogs!',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        primarySwatch: Colors.green,
       ),
-      home: MyHomePage(title: 'Flutter Demo Home Page'),
+      home: MyHomePage(title: 'All About Dogs!'),
     );
   }
 }
@@ -25,12 +27,26 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+  bool _clicked = false;
+  var _dog = "";
 
-  void _incrementCounter() {
+  void _handelClick() {
+    _getDog();
     setState(() {
-      _counter++;
+      _clicked = !_clicked;
     });
+  }
+
+  Future<String> _getDog() async {
+    var dogUrl = 'https://dog.ceo/api/breeds/image/random';
+    var response = await http.get(dogUrl);
+    if (response.statusCode == 200) {
+      var jsonResponse = convert.jsonDecode(response.body);
+      var parsedResponse = jsonResponse as Map<String, dynamic>;
+      setState(() {
+        _dog = parsedResponse['message'];
+      });
+    }
   }
 
   @override
@@ -39,25 +55,43 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
         title: Text(widget.title),
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Text(
-              'You have pushed the button this many times:',
+      body: (_clicked)
+          ? Center(
+            child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: <Widget>[
+                  Card(
+                    child: Container(
+                      width: 200,
+                      margin: EdgeInsets.symmetric(
+                        vertical: 10,
+                        horizontal: 20,
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                          Image(
+                            image: NetworkImage(_dog),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  FlatButton(child: Text('Change Dogs?'), onPressed: _getDog,)
+                ],
+              ),
+          )
+          : Center(
+              child: RaisedButton(
+                child: Text(
+                  'Click to see dogs!',
+                  style: TextStyle(color: Colors.white),
+                ),
+                color: Colors.green,
+                onPressed: _handelClick,
+              ),
             ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headline4,
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: Icon(Icons.add),
-      ), 
     );
   }
 }
